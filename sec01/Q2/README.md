@@ -14,10 +14,15 @@ df_vali = df.filter(pl.col('x') >= 5)
 ```
 
 ### 評価
-#### 前処理なし  
+#### 前処理なし(元データ)   
 ベストパラメータ {'solver': 'svd', 'max_iter': 2000, 'alpha': 5.0}  
 ベストスコア 0.10533022616996165  
-![alt text](image-2.png)  
+![元データを様々な形で可視化](original_graphs.png)  
+![学習データと検証データの散布図](image-5.png)  
+**ペアプロット**  
+![元データのジョインプロット](original_join_plot.png) 
+![学習データのジョインプロット](train_join_plot.png) 
+![検証データのジョインプロット](valid_join_plot.png) 
 #### 前処理あり  
 **Xのみ標準化**  
 ベストパラメータ {'solver': 'svd', 'max_iter': 1000, 'alpha': 0.1}  
@@ -29,3 +34,15 @@ df_vali = df.filter(pl.col('x') >= 5)
 ベストパラメータ {'solver': 'svd', 'max_iter': 1000, 'alpha': 0.1}  
 ベストスコア 0.10532625838858785  
 ![alt text](image.png)
+
+**マハラノビス距離が1.3以上のデータを排除**
+![alt text](image-3.png)
+
+**ノイズを1000個追加した時**
+![alt text](image-4.png)
+
+マハラノビス距離  
+![マハラノビス距離 ](mahala_graph.png) 
+
+**ノイズを500個追加、マハラノビス距離ではずれ値を除去、Xとyを標準化**
+![alt text](image-2.png)
