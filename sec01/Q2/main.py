@@ -32,7 +32,7 @@ if __name__ == "__main__":
   df_valid = df.filter(pl.col("y_over_5") == True)
   dd.draw_pair_plot(df, df_train, df_valid, original=True) # 学習データ、検証データのヒストグラムと散布図のペアプロットを描画
 
-  # """前処理"""
+  """前処理"""
   dp = DataPreprocessor()
   # データの水増し
   noise_df = dp.make_noise(df)  
@@ -47,6 +47,7 @@ if __name__ == "__main__":
   # 回帰のための前処理後の学習データと検証データを用意
   df_train = machining_df.filter(pl.col("y_over_5") == False)
   df_valid = machining_df.filter(pl.col("y_over_5") == True)
+  # print(df_train.shape, df_valid.shape)
   dd.show_null(machining_df) # 欠損値の確認
   dd.draw_pair_plot(machining_df, df_train, df_valid, original=False) # 学習データ、検証データのヒストグラムと散布図のペアプロットを描画
   

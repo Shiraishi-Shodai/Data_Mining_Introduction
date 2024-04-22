@@ -53,10 +53,6 @@ class Pred:
       print(f'-------{key}データに対する予測-------')
       y_pred = self.model.predict(X)
       print(f'平均二乗誤差 {mean_squared_error(y, y_pred)}')
-
-    # 既存のテキスト要素があれば削除する(テキストを生成すると、デフォルトの位置がAxesの右下になるから。2つめのグラフのラベルが右下に来てしまう)
-      for text in ax.texts:
-        text.remove()
         
       ax.text(0.01, 0.80, f'MSE {mean_squared_error(y, y_pred):.2f}', transform=ax.transAxes)
       ax.scatter(X, y, label="実測値", c="yellow")
