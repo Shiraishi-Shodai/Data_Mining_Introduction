@@ -20,9 +20,9 @@ df_vali = df.filter(pl.col('x') >= 5)
 ![元データを様々な形で可視化](original_graphs.png)  
 ![学習データと検証データの散布図](image-5.png)  
 **ペアプロット**  
-![元データのジョインプロット](original_join_plot.png) 
-![学習データのジョインプロット](train_join_plot.png) 
-![検証データのジョインプロット](valid_join_plot.png) 
+![元データのジョインプロット](original_full_join_plot.png)  
+![学習データのジョインプロット](original_train_join_plot.png)  
+![検証データのジョインプロット](original_valid_join_plot.png)  
 #### 前処理あり  
 **Xのみ標準化**  
 ベストパラメータ {'solver': 'svd', 'max_iter': 1000, 'alpha': 0.1}  
