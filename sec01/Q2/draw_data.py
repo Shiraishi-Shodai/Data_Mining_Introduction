@@ -27,8 +27,6 @@ class DrawData:
         Args:
             original:
             df: 
-            df_train: 
-            df_valid: 
         
         Return:
             None

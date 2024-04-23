@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import japanize_matplotlib
 import numpy as np
+import polars as pl
 
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
@@ -34,7 +35,7 @@ class Pred:
         
         # scikit-learn用のチューニング工程
         param_dic = {
-          "alpha" : [0.01, 0.1, 0.2, 0.3, 0.4, 1, 1.5, 3, 5, 10, 20, 30, 100, 1000],
+          "alpha" : [0.01, 0.1, 0.2, 0.3, 0.4, 1, 1.5, 3, 5, 10, 20, 30, 100, 100],
           "solver" : ["auto", "svd", "cholesky"],
           "max_iter" : [1000, 2000, 3000]
         }
@@ -76,17 +77,19 @@ class Pred:
       print(f'平均二乗誤差: {mean_squared_error(y, y_pred)}')
       
       ax.text(0.01, 0.80, f'MSE {mean_squared_error(y, y_pred):.2f}', transform=ax.transAxes)
-      ax.scatter(X, y, label="実測値", c="yellow")
-      ax.plot(X, y_pred, label="予測値", c="red")
+      ax.text(0.01, 0.75, f'決定係数: {r2_score(y, y_pred) * 100 :.2f} %', transform=ax.transAxes)
+      ax.scatter(X, y, label="実測値", c="orange")
+      ax.plot(X, y_pred, label="予測値", c="blue")
       ax.legend(bbox_to_anchor=(0, 1), loc='upper left', borderaxespad=0)
       ax.set_title(f'{key}データに対する予測値')
 
-    def show_result(self, df_train, df_valid):
+    def show_result(self, machining_df_train, machining_df_valid,):
         """学習データと検証データに対する予測結果を表示
         """
               
-        self.plot_pred_dict["train"] = df_train
-        self.plot_pred_dict["valid"] = df_valid
+        self.plot_pred_dict["train"] = machining_df_train
+        self.plot_pred_dict["valid"] = machining_df_valid
+
         fig = plt.figure()
         for index, item in enumerate(self.plot_pred_dict.items()):
             key, val = item[0], item[1]
@@ -94,4 +97,51 @@ class Pred:
             X = val["x"].to_numpy().reshape(-1, 1) # X_train["x"] or X_valid["x"]
             y = val["y"].to_numpy().reshape(-1, 1) # y_train["y"] or y_valid["y"]
             self.pred_process(key, X, y, ax)
+            plt.grid()
             plt.savefig(f'pred_data.png')
+    
+    def gbm(self, df_train, df_valid):
+      X_train = df_train["x"].to_numpy().reshape(-1, 1)
+      y_train = df_train["y"].to_numpy()
+      X_valid = df_valid["x"].to_numpy().reshape(-1, 1)
+      y_valid = df_valid["y"].to_numpy()
+      train_data = lgb.Dataset(X_train, y_train)
+      valid_data = lgb.Dataset(X_valid, y_valid)
+
+      params = {
+        'task': 'train',
+        'boosting_type': 'gbdt',
+        'objective': 'regression',
+        'verbose': 2,
+      }
+      
+      gbm = lgb.train(
+        params,
+        train_data,
+        valid_sets=valid_data,
+        num_boost_round=1000
+      )
+      
+      train_pred = gbm.predict(X_train)
+      print('学習データに対する予測')
+      print(f'決定係数: {r2_score(y_train, train_pred)*100}% ')
+      print(f'平均二乗誤差: {mean_squared_error(y_train, train_pred)}')
+      valid_pred = gbm.predict(X_valid)
+      print('テストデータに対する予測')
+      print(f'決定係数: {r2_score(y_valid, valid_pred)*100}% ')
+      print(f'平均二乗誤差: {mean_squared_error(y_valid, valid_pred)}')
+      
+      fig = plt.figure()
+      ax1 = fig.add_subplot(1, 2, 1)
+      ax2 = fig.add_subplot(1, 2, 1)
+      ax1.text(0.01, 0.80, f'MSE {mean_squared_error(y_train, train_pred):.2f}', transform=ax1.transAxes)
+      ax1.scatter(X_train, y_train, label="実測値", c="yellow")
+      ax1.plot(X_train, train_pred, label="予測値", c="red")
+      ax1.legend(bbox_to_anchor=(0, 1), loc='upper left', borderaxespad=0)
+      ax1.set_title(f'trainデータに対する予測値')
+      ax2.text(0.01, 0.80, f'MSE {mean_squared_error(y_valid, valid_pred):.2f}', transform=ax2.transAxes)
+      ax2.scatter(X_valid, y_valid, label="実測値", c="yellow")
+      ax2.plot(X_valid, valid_pred, label="予測値", c="red")
+      ax2.legend(bbox_to_anchor=(0, 1), loc='upper left', borderaxespad=0)
+      ax2.set_title(f'validデータに対する予測値')
+      

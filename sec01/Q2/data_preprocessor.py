@@ -77,14 +77,14 @@ class DataPreprocessor:
             y_minus_noise = df["y"] - np.random.normal(mean, std, df["y"].shape)
             
             X_noise = pl.concat([X_plus_noise, X_minus_noise])
-            y_noise = pl.concat([y_minus_noise, y_plus_noise])
+            y_noise = pl.concat([y_plus_noise, y_minus_noise])
             
             # 生成したノイズを一時的に格納するデータフレーム
             tmp_df = pl.DataFrame({
                 "x": y_noise,
                 "y": X_noise
             })
-                        
+            
             # # 元のデータフレームとノイズデータフレームを結合
             noise_df = pl.concat([noise_df, tmp_df])
                 
