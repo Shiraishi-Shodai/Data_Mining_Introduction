@@ -11,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 class DataPreprocessor:
     def __init__(self) -> None:
         self.ss = StandardScaler()
-
     
     def mahala(self, df, threshold):
         """① 外れ値の除去(xとyには相関関係が存在するためマハラノビス距離を使用)
@@ -68,26 +67,24 @@ class DataPreprocessor:
         # ノイズデータフレーム
         noise_df = df
 
-        for i in range(5):
+        for i in range(7): # 学習データを80% テストデータを20%の配分にしたい
 
-            X_mean = df["x"].mean()
-            y_mean = df["y"].mean()
-            X_std = df["x"].std(ddof=0) # x列の母集団の標本標準偏差
-            y_std = df["y"].std(ddof=0) # y列の母集団の標本標準偏差
-            X_noise = df["x"] + np.random.normal(X_mean, X_std, df["x"].shape)
-            y_noise = df["x"] + np.random.normal(y_mean, y_std, df["y"].shape)
+            mean = 0
+            std = 1
+            X_plus_noise = df["x"] + np.random.normal(mean, std, df["x"].shape)
+            X_minus_noise = df["x"] - np.random.normal(mean, std, df["x"].shape)
+            y_plus_noise = df["y"] + np.random.normal(mean, std, df["y"].shape)
+            y_minus_noise = df["y"] - np.random.normal(mean, std, df["y"].shape)
             
+            X_noise = pl.concat([X_plus_noise, X_minus_noise])
+            y_noise = pl.concat([y_minus_noise, y_plus_noise])
             
             # 生成したノイズを一時的に格納するデータフレーム
             tmp_df = pl.DataFrame({
                 "x": y_noise,
                 "y": X_noise
             })
-            
-            tmp_df = tmp_df.with_columns(pl.Series(name="y_over_5", values=map(lambda x : True if x >= 5 else False, df["x"])))
-            
-            # print(tmp_df.shape) # (100, 2)
-            
+                        
             # # 元のデータフレームとノイズデータフレームを結合
             noise_df = pl.concat([noise_df, tmp_df])
                 
