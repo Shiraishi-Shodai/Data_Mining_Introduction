@@ -11,6 +11,7 @@ from typing import List
 from sklearn.metrics import accuracy_score, silhouette_samples
 from skfuzzy.cluster import cmeans
 from matplotlib import cm
+
 def countCluster(labels):
     """クラスター数をカウント。外れ値があれば-1を引く
     """
