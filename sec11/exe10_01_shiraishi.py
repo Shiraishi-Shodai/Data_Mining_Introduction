@@ -32,76 +32,59 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.metrics import confusion_matrix
-    
-def shuffle(df, del_num):
-    """
-    Description: この後の教師あり学習や半教師なし学習で与える正解ラベルに偏りがないようデータをシャッフル
-    
-    Args:
-        df(pd.DataFrame)        : load_irisで取得したデータフレーム
-        del_num(int)            : ラベルを-1に変換する個数
-        
-    Return:
-        shuffle_df(pd.DataFrame): 引数で受け取ったdfをシャッフルし、ラベルを-1にしない部分が均等に分割したデータフレーム
-    """
-    label_types = df["target"].unique()               # ラベルの種類
-    len_df_indexes = df.shape[0]                      # dfの行数 
-    tail_num = len_df_indexes - del_num               # 教師ラベルを残すデータの数
-    min_num = tail_num // len(label_types)     # それぞれのラベルの種類に必要なデータの最低数
-    
-    print(f"教師データを残すラベルを等分してシャッフルするためにはそれぞれ{min_num}個必要です。")   
-    
-    flag = True  # while文を抜けるか判断するフラグ  
-    shuffle_df = None
-        
-    while(flag):
-        
-        tmp_df = df.sample(frac=1.0)                      # dfのデータをすべてシャッフルしてサンプリング(fracはサンプリング数の割合を表す(0.0 ~ 1.0))
-        tail_label = tmp_df["target"].tail(tail_num)     
-    
-        for i in label_types:
-            label_count = (tail_label == i).sum()
-            if min_num > label_count:
-                break
-            elif i == label_types[-1]:
-                flag = False
-                shuffle_df = tmp_df
-    
-    print(f"シャッフル後のデータフレームの後ろ行のラベルカウント \n {shuffle_df['target'].tail().value_counts()}")
-    return shuffle_df
-    
-def make_label_color(label):
-    """
-    Description: 整数を受取りそれぞれの値に対応する文字列を返す
-    
-    Args: 
-        label(int) : ラベルデータ(-1~2)
-    
-    Return:
-        文字列(str): black,red, blue, greeのいずれかの文字列を返す
-    """
-    color_dict = { -1: "black", 0: "red", 1: "blue" }
-    return color_dict.get(label, "green")
 
-def label_machining(del_num, labels):
-    """
-    Description: 与えられたラベル配列を引数Nで指定された割合分、教師データとして残しそれ以外を-1とする。
-    
-    Args:
-        del_num (int)                 : 教師データを削除する個数
-        labels (ndarray dtype=int): 加工するラベル配列
+# データの加工をするクラス
+class Machine():
+    def shuffle(self,df):
+        """
+        Description: ラベルが012012の順番になるよう並び替え
         
-    Return:
-        machining_labels(ndarray dtype=int): 加工したラベル配列
-    """
-    
-    machining_labels = labels.copy()
-    
-    machining_labels[0:del_num] = np.array(-1)
-    print(f"-1のデータのラベルの割合 {(np.count_nonzero(machining_labels < 0)/ len(machining_labels) )*100}")
-    print(f"-1以上のデータのラベルの割合 {np.count_nonzero(machining_labels >= 0) / len(machining_labels)*100}")
-    
-    return machining_labels
+        Args:
+            df(pd.DataFrame): load_irisで読み込んだirisデータフレーム
+        Return:
+            shuffle_df(pd.DataFrame): irisデータフレームを並び替えたデータフレーム
+            
+        """
+        label_types = df["target"].unique()
+        # 並び替えたインデックスを取得
+        indexes = np.array([df.query("target == @label").index for label in label_types]).reshape(3, -1).T.reshape(-1, 1).flatten()
+        # データフレームを並び替え
+        shuffle_df = df.reindex(index=indexes)
+        
+        return shuffle_df
+        
+    def make_label_color(self, label):
+        """
+        Description: 整数を受取りそれぞれの値に対応する文字列を返す
+        
+        Args: 
+            label(int) : ラベルデータ(-1~2)
+        
+        Return:
+            文字列(str): black,red, blue, greeのいずれかの文字列を返す
+        """
+        color_dict = { -1: "black", 0: "red", 1: "blue" }
+        return color_dict.get(label, "green")
+
+    def label_machining(self, del_num, labels):
+        """
+        Description: 与えられたラベル配列を引数Nで指定された割合分、教師データとして残しそれ以外を-1とする。
+        
+        Args:
+            del_num (int)                 : 教師データを削除する個数
+            labels (ndarray dtype=int): 加工するラベル配列
+            
+        Return:
+            machining_labels(ndarray dtype=int): 加工したラベル配列
+        """
+        
+        machining_labels = labels.copy()
+        
+        machining_labels[0:del_num] = np.array(-1)
+        print(f"-1のデータのラベルの割合 {(np.count_nonzero(machining_labels < 0)/ len(machining_labels) )*100}")
+        print(f"-1以上のデータのラベルの割合 {np.count_nonzero(machining_labels >= 0) / len(machining_labels)*100}")
+        
+        return machining_labels
 
 def plot(X1, X2, labels_color, file_name, title, xlabel="sepal width", ylabel="petal length"):
     """グラフを描画する(以下略)
@@ -173,11 +156,12 @@ def score(y, pred):
 def main():
     
     print("=============== データの読み込み・前処理 ===============")
+    machine = Machine()
     df = load_iris(as_frame=True).frame         # データフレームの読み込み sepal length (cm)  sepal width (cm)  petal length (cm)  petal width (cm) target
     N = 0.03                                    # 教師データを残す割合(1.0 ~ 0.0)
     del_num = int((1 - N) * df.shape[0])        # ラベルを-1に変換する個数
     
-    shuffle_df = shuffle(df, del_num)           # データフレームをシャッフル
+    shuffle_df = machine.shuffle(df)           # データフレームをシャッフル
     X = shuffle_df.iloc[:,:-1].to_numpy()               # 特徴量を取得
     y = shuffle_df["target"].to_numpy()                 # 正解データを取得
     labels = y.copy()                           # ラベル加工を行う用の変数を生成
@@ -185,23 +169,23 @@ def main():
     X1 = X[:, 0]
     X2 = X[:, 1]
             
-    machining_labels = label_machining(del_num, labels)  # (1 - N)%のラベルを削除(-1)とする
+    machining_labels = machine.label_machining(del_num, labels)  # (1 - N)%のラベルを削除(-1)とする
 
     # 元のラベルデータを表示
-    y_labels_color = list(map(lambda label : make_label_color(label), y))
+    y_labels_color = list(map(lambda label : machine.make_label_color(label), y))
     plot(X1, X2, y_labels_color, "exe10_01加工前のラベル.png", "加工前のラベル")
 
     # 加工したラベルデータ結果の表示
-    machining_labels_color = list(map(lambda label : make_label_color(label), machining_labels))
+    machining_labels_color = list(map(lambda label :machine. make_label_color(label), machining_labels))
     plot(X1, X2, machining_labels_color, "exe10_01加工後ラベル.png", "加工後のラベル")
 
     print()
     print("=============== 予測 ===============")
     # SVCによる予測(教師あり学習)
     svc = SVC(gamma="scale")
-    svc.fit(X[del_num:, :], machining_labels[del_num:])
+    svc.fit(X[del_num:, ::1], machining_labels[del_num:])
     svc_pred = svc.predict(X)    
-    svc_pred_color = list(map(lambda label: make_label_color(label), svc_pred))
+    svc_pred_color = list(map(lambda label: machine.make_label_color(label), svc_pred))
     plot(X1, X2, svc_pred_color, "exe10_01_svc.png", "SVC(教師あり学習)による予測結果")
     
     print("⭐⭐⭐⭐⭐⭐⭐⭐　SVC(教師あり学習)の予測結果　⭐⭐⭐⭐⭐⭐⭐⭐")
@@ -212,7 +196,7 @@ def main():
     km.fit(X)
     km_pred = km.labels_
     km_pred = list(map(lambda label: 1 if label == 0 else 0 if label == 1 else label, km_pred)) # 0と1を入れ替える
-    km_pred_color = list(map(lambda label: make_label_color(label), km_pred))
+    km_pred_color = list(map(lambda label: machine.make_label_color(label), km_pred))
     plot(X1, X2, km_pred_color, "exe10_01_kmeans.png", "KMeans(教師なし学習)による予測結果")
     print("⭐⭐⭐⭐⭐⭐⭐⭐　KMeans(教師なし学習)の予測結果　⭐⭐⭐⭐⭐⭐⭐⭐")
     score(y, km_pred)
@@ -221,7 +205,7 @@ def main():
     ls =  LabelSpreading(kernel='knn', alpha=0.2, n_neighbors=7,max_iter=1000, n_jobs=-1)
     ls.fit(X, machining_labels)
     ls_pred = ls.transduction_
-    ls_pred_color = list(map(lambda label: make_label_color(label), ls_pred))
+    ls_pred_color = list(map(lambda label: machine.make_label_color(label), ls_pred))
     plot(X1, X2, ls_pred_color, "exe10_01_ls.png", "LabelSpreading(半教師あり学習)による予測結果")
     
     print("⭐⭐⭐⭐⭐⭐⭐⭐　LabelSpreading(半教師あり学習)の予測結果　⭐⭐⭐⭐⭐⭐⭐⭐")

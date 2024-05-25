@@ -34,10 +34,22 @@ def interleave_data(X, y):
     return X[interleaved_indices], y[interleaved_indices]
 
 
+def shuffle(df):
+    
+    label_types = df["target"].unique()
+    # インデックスを並び替え
+    indexes = np.array([df.query("target == @label").index for label in label_types]).reshape(3, -1).T.reshape(-1, 1).flatten()
+    # データフレームを並び替え
+    shuffle_df = df.reindex(index=indexes)
+    
+    return df
+    
+    
 df = load_iris(as_frame=True).frame
-X, y = df.iloc[:, :-1].to_numpy(), df["target"].to_numpy()
+shuffle(df)
+# X, y = df.iloc[:, :-1].to_numpy(), df["target"].to_numpy()
 
-a, b = interleave_data(X, y)
+# a, b = interleave_data(X, y)
 # print(df.head())
 # print(a[:5, :])
 # print(b[:5])
