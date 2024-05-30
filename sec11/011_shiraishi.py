@@ -261,7 +261,7 @@ def main():
             score_df = tmp_score_df
         else:
             score_df = pd.concat([score_df, tmp_score_df], axis=0)
-    
+   
     for score in score_columns:
         fig = plt.figure()
         ax = fig.add_subplot(111)
