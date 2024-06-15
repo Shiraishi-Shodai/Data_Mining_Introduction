@@ -42,12 +42,13 @@ t_std = t.std()
 
 t_mahala = np.array([abs(tn - t_mu) / t_std for tn in t]) 
 
-q0, q25, q50, q75, q100 = np.percentile(x, q = [0, 25, 50, 75, 100], method="midpoint")
+q0, q25, q50, q75, q100 = np.percentile(t_mahala, q = [0, 25, 50, 75, 100], method="midpoint")
 
 iqr = q75 - q25                # 四分位範囲
 lower_fence = q25 - 1.5 * iqr  # 下限の外れ値
 upper_fence = q75 + 1.5 * iqr  # 上限の外れ値
 
+use_index = [tn for tn in t_mahala if tn > lower_fence and tn < upper_fence ]
 
 # model = LinearRegression()
 # model.fit(x, z)
