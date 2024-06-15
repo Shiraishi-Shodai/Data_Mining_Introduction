@@ -1,1 +1,6 @@
-/env/
+env/
+windosEnv/
+.mypy_cache/
+pi/100_special/pi-10oku.txt
+pi/100_special/pi-billion_MIT.txt
+pi/100_special/pi.dat
