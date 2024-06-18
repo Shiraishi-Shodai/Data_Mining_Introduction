@@ -4,6 +4,7 @@ import japanize_matplotlib
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, PredictionErrorDisplay
+import math
 
 data = pd.read_csv('ch.csv')
 x = data["x"].to_numpy().reshape(-1, 1)
@@ -37,7 +38,7 @@ x300_pred = (np.log10(P) - model.intercept_) / model.coef_[0]
 print(f'パラメータA {model.coef_[0]}')
 print(f'パラメータB {model.intercept_}')
 print(f'決定係数 {r2_score(z, z_pred)}')
-print(f'血中成分が{P}になるのは接種後{round(x300_pred * 2) / 2}時間後')
+print(f'血中成分が{P}になるのは接種後{math.floor(x300_pred * 2) / 2}時間後')
 
 plt.scatter(x, z)
 # plt.scatter(x, z)

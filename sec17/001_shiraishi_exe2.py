@@ -65,9 +65,11 @@ upper_fence = q75 + 1.5 * iqr  # 上限の外れ値
 
 use_index = list(map(lambda n_distance: True if n_distance > lower_fence and n_distance < upper_fence else False, xz_distance))
 
-x_use = x[use_index]
+use_df = mean_df.loc[use_index] # 前処理後のデータフレーム
+
+x_use = use_df["year"].to_numpy().reshape(-1, 1)
+t_use = use_df["MOS_transistor_count"].to_numpy()
 z_use = z[use_index]
-t_use = t[use_index]
 
 model = LinearRegression()
 model.fit(x_use, z_use)
@@ -76,7 +78,7 @@ t_pred = 10 ** (model.coef_[0] * x_use + model.intercept_)
 z_pred = model.coef_[0] * x_use + model.intercept_
 
 # """（６）x, z の回帰で R2 決定係数を求めよ。"""
-print(f'決定係数 {r2_score(z[use_index], z_pred)*100}')
+print(f'元データの決定係数 {r2_score(z[use_index], z_pred)*100}')
 # print(f'傾き: {model.coef_[0]}')
 # print(f'切片: {model.intercept_}')
 original_a = model.coef_[0]
@@ -113,44 +115,46 @@ original_a = model.coef_[0]
 """
 ムーアの予測どおりにトランジスタ数が増えた場合のデータを求め、元データと比較する
 """
-t_start = t_use[0]
-moore_arr = np.empty((0, 2))
 
-for i in np.arange(min(x_use)[0], max(x_use)[0], 2):
+# 2行飛ばしでデータを取得([start:stop:step])
+moore_df = use_df[::2]
+tmp = moore_df.loc[0, "MOS_transistor_count"]
+moore_t_list = []
+MOORE = 2
 
-    if moore_arr.size == 0: # データが空なら
-        moore_arr = np.append(moore_arr, np.array([[i, t_start]]), axis=0)
-    else:
-        moore_arr = np.append(moore_arr, np.array([[i, moore_arr[moore_arr.shape[0] - 1, 1] * 2]]), axis=0)
+for i in range(moore_df.shape[0]):
+    print(tmp)
+    moore_t_list.append(tmp)
+    tmp *= 2
 
-moore_x = moore_arr[:, 0].reshape(-1, 1)
-moore_t = moore_arr[:, 1]
-
-plt.scatter(x, t, label='元データ')
-plt.scatter(moore_x, moore_t, color='orange', label="ムーアの予測")
+moore_df.insert(2, "moore_t", moore_t_list)
+x2 = moore_df["year"].to_numpy().reshape(-1, 1)
+t2 = moore_df["MOS_transistor_count"].to_numpy()
+moore_t = moore_df["moore_t"].to_numpy()
 
 moore_z = np.log10(moore_t) # 10を底とする常用対数を取る
-model.fit(moore_x, moore_z)
-model.predict(moore_x)
-moore_pred = 10 ** (model.coef_[0] * moore_x + model.intercept_)
-print(f'傾き: {model.coef_[0]}')
-print(f'切片: {model.intercept_}')
+model.fit(x2, moore_z)
+model.predict(x)
+moore_pred = 10 ** (model.coef_[0] * x2 + model.intercept_)
 moore_a = model.coef_[0]
 
+# plt.scatter(x2, t2, label='元データ')
+# plt.scatter(x2, moore_t, color='orange', label="ムーアの予測")
 plt.plot(x, t, label="元データ")
-plt.plot(moore_x, moore_pred, color='red', label='ムーアの予測')
+plt.plot(x2, moore_pred, color='red', label='ムーアの予測')
 plt.legend()
 # plt.title('ムーアの予測と元データの比較1')
 plt.title('ムーアの予測と元データの比較2')
 plt.xlabel('年')
-plt.ylabel('集積回路あたりの部品数')
-# plt.savefig('result_scatter.png')
-plt.savefig('result_plot.png')
+# plt.ylabel('集積回路あたりの部品数')
+plt.ylabel('常用対数')
+plt.savefig('001_result_plot.png')
 
-print(f'オリジナルデータの傾き: {original_a}')
+print(f'元データとムーアの予測の決定係数 {r2_score(z, moore_z)}')
+print(f'元データの傾き: {original_a}')
 print(f'ムーアの予測の傾き: {moore_a}')
 
-print(pd.DataFrame(moore_arr))
+print(moore_df)
 """
 ムーアの予測によって求めた指数の傾き0.150と元データから求めた指数の傾き0.146はだいたい同じくらいなのでムーアの予測は正しいと言って良いと考える
 """
