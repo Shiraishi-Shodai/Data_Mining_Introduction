@@ -23,7 +23,6 @@ y_pred = 10 ** (z_pred)
 # display.plot()
 # plt.savefig('002_residual_plot.png')
 
-
 P = 300
 """
 ① 300 = 10 ** (model.coef_[0] * x + model.intercept_)
@@ -40,12 +39,13 @@ print(f'パラメータB {model.intercept_}')
 print(f'決定係数 {r2_score(z, z_pred)}')
 print(f'血中成分が{P}になるのは接種後{round(x300_pred * 2) / 2}時間後')
 
-plt.scatter(x, y)
+plt.scatter(x, z)
 # plt.scatter(x, z)
-plt.plot(x, y_pred, c='red')
+# plt.plot(x, y_pred, c='red')
 plt.title('血中成分量')
 # plt.title('血中成分量の常用対数')
 plt.xlabel('時間')
 plt.ylabel('血中成分')
 # plt.savefig('002_original.png')
 # plt.savefig('002_result.png')
+plt.savefig('test2.png')

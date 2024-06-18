@@ -29,8 +29,15 @@ data = pd.read_csv("Transistor_count.csv")
 # print(data.isnull().sum())
 # print(data.describe())
 
-x = data['year'].to_numpy().reshape(-1, 1)
-t = data["MOS_transistor_count"].to_numpy()
+"""
+年ごとの平均を取る(xとyを関数関係にする。xが決まればyが一意に決まる関係)
+"""
+
+mean_df = data.groupby(["year"]).mean()
+mean_df = mean_df.reset_index()
+
+x = mean_df['year'].to_numpy().reshape(-1, 1)
+t = mean_df["MOS_transistor_count"].to_numpy()
 # """（３）z = log10(y) として、x から z を予測する式を求めよ。"""
 z = np.log10(t) # 10を底とする常用対数を取る
 
@@ -72,17 +79,18 @@ print(f'決定係数 {r2_score(z[use_index], z_pred)*100}')
 original_a = model.coef_[0]
 
 # """（５）残差を残差プロットに表せ。（x, z の回帰で）"""
-display = PredictionErrorDisplay(y_true=z_use, y_pred=z_pred.flatten())
-display.plot()
-plt.title('残差プロット')
-plt.xlabel('年')
-plt.ylabel('残差')
-plt.savefig("residual_plot.png")
+# display = PredictionErrorDisplay(y_true=z_use, y_pred=z_pred.flatten())
+# display.plot()
+# plt.title('残差プロット')
+# plt.xlabel('年')
+# plt.ylabel('残差')
+# plt.savefig("residual_plot.png")
 
 # """（１）xy 平面にこのデータを散布図としてプロットせよ。"""
 # plt.scatter(x, t)
 # """（２）次に、縦軸を log10(y)（常用対数）としてプロットしてみよ。"""
 # plt.scatter(x_use, z_use)
+# plt.plot(x_use, z_use)
 
 # 最終結果
 # plt.plot(x, t)
@@ -93,7 +101,8 @@ plt.savefig("residual_plot.png")
 # plt.ylabel(' log10(t)（常用対数）')
 
 # plt.savefig('original_data.png')
-# plt.savefig('x_z_scatter.png')
+# plt.savefig('x_z_scatter2.png')
+# plt.savefig('x_z_plot.png')
 # plt.savefig('linear_pred.png')
 
 # """（７）この結果から、ムーアの法則（yは、2年ごとに2倍になる）は正しいといえるかどうかあなたの考えを述べなさい。"""
@@ -101,45 +110,42 @@ plt.savefig("residual_plot.png")
 """
 ムーアの予測どおりにトランジスタ数が増えた場合のデータを求め、元データと比較する
 """
-# t_start = t[0]
-# moore_list = []
-# for i in np.arange(min(x_use)[0], max(x_use)[0], 2):
-#     index = np.where(x_use == i)[0][0] # 2年ずつ増えたインデックス
-    
-#     if index == 0:
-#         moore_list.append([i, t_start])
-    
-#     else:
-#         # print(moore_list[len(moore_list) - 1][1] * 2)
-#         moore_list.append([i, moore_list[len(moore_list) - 1][1] * 2])
+t_start = t_use[0]
+moore_arr = np.empty((0, 2))
 
-# moore_list = np.array(moore_list)
-# moore_x = moore_list[:, 0].reshape(-1, 1)
-# moore_t = moore_list[:, 1]
+for i in np.arange(min(x_use)[0], max(x_use)[0], 2):
 
-# plt.scatter(x, t, label='元データ')
-# plt.scatter(moore_x, moore_t, color='orange', label="ムーアの予測")
+    if moore_arr.size == 0: # データが空なら
+        moore_arr = np.append(moore_arr, np.array([[i, t_start]]), axis=0)
+    else:
+        moore_arr = np.append(moore_arr, np.array([[i, moore_arr[moore_arr.shape[0] - 1, 1] * 2]]), axis=0)
 
-# moore_z = np.log10(moore_t) # 10を底とする常用対数を取る
-# model.fit(moore_x, moore_z)
-# model.predict(moore_x)
-# moore_pred = 10 ** (model.coef_[0] * moore_x + model.intercept_)
-# print(f'傾き: {model.coef_[0]}')
-# print(f'切片: {model.intercept_}')
-# moore_a = model.coef_[0]
+moore_x = moore_arr[:, 0].reshape(-1, 1)
+moore_t = moore_arr[:, 1]
 
-# plt.plot(x, t, label="元データ")
-# plt.plot(moore_x, moore_pred, color='red', label='ムーアの予測')
-# plt.legend()
-# # plt.title('ムーアの予測と元データの比較1')
-# plt.title('ムーアの予測と元データの比較2')
-# plt.xlabel('年')
-# plt.ylabel('集積回路あたりの部品数')
-# # plt.savefig('result_scatter.png')
-# plt.savefig('result_plot.png')
+plt.scatter(x, t, label='元データ')
+plt.scatter(moore_x, moore_t, color='orange', label="ムーアの予測")
 
-# print(f'オリジナルデータの傾き: {original_a}')
-# print(f'ムーアの予測の傾き: {moore_a}')
+moore_z = np.log10(moore_t) # 10を底とする常用対数を取る
+model.fit(moore_x, moore_z)
+model.predict(moore_x)
+moore_pred = 10 ** (model.coef_[0] * moore_x + model.intercept_)
+print(f'傾き: {model.coef_[0]}')
+print(f'切片: {model.intercept_}')
+moore_a = model.coef_[0]
+
+plt.plot(x, t, label="元データ")
+plt.plot(moore_x, moore_pred, color='red', label='ムーアの予測')
+plt.legend()
+# plt.title('ムーアの予測と元データの比較1')
+plt.title('ムーアの予測と元データの比較2')
+plt.xlabel('年')
+plt.ylabel('集積回路あたりの部品数')
+# plt.savefig('result_scatter.png')
+plt.savefig('result_plot.png')
+
+print(f'オリジナルデータの傾き: {original_a}')
+print(f'ムーアの予測の傾き: {moore_a}')
 
 """
 ムーアの予測によって求めた指数の傾き0.150と元データから求めた指数の傾き0.146はだいたい同じくらいなのでムーアの予測は正しいと言って良いと考える
