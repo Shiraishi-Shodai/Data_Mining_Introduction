@@ -53,7 +53,7 @@ plt.plot(x, y_pred, c="red")
 # a1 = popt[0]
 # a2 = popt[1]
 # a3 = popt[2]
-# print(f"a1={a1},a2={a2},a3={a3}")
+# print(f"A={a1},B={a2},C={a3}")
 # x_line = np.linspace(0, 6, 100)
 # y_pred = func(x_line, a1, a2, a3)
 # plt.plot(x_line, y_pred, c="red")

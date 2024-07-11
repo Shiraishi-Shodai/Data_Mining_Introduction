@@ -15,6 +15,8 @@ from sklearn.preprocessing import PolynomialFeatures
 df = pd.read_csv('exe21.csv')
 x = df["x"].to_numpy().reshape(-1, 1)
 y = df["y"].to_numpy()
+th = 10.5
+ans_deg = None
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -25,14 +27,20 @@ for deg in range(1, 21):
     model = LinearRegression()
     model.fit(poly_x, y)
     y_pred = model.predict(poly_x)
-    # print(model.coef_)
-    # print(model.intercept_)
-    # print(f'A={model.coef_[0]} B={model.coef_[1]} C={model.intercept_}')
-    print(f'平均二乗誤差 {np.mean(y - y_pred) ** 2}')
     plt.title(f"y = x * {model.coef_[0]:.3f} + {model.coef_[1]:.3f} * sin(2π * x) + {model.intercept_:.3f}")
     plt.plot(x, y_pred, c="red")
     plt.scatter(x, y)
     plt.xlabel("x")
     plt.ylabel("y")
     # plt.savefig('predict2.png')
-    plt.show()
+    # plt.show()
+    mse = math.floor(np.mean((y - y_pred) ** 2) * 10) / 10
+    print(f'平均二乗誤差 {mse}')
+    
+    if(int(mse *  10) <= int(th * 10)):
+        ans_deg = deg
+        print(model.coef_)
+        print(model.intercept_)
+        break
+
+print(f'最小二乗誤差が{th}以下になるようにしたい。最低でも{deg}次の多項式で近似する必要がある')
