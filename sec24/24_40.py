@@ -1,7 +1,6 @@
 from wordcloud import WordCloud
 import cv2
 import re
-
 from janome.tokenizer import Tokenizer
 
 def wakachigaki(text):
